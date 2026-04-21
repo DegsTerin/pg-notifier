@@ -3,7 +3,7 @@
 PgNotifier is a professional PostgreSQL monitoring tool for Windows 10 and 11, built in PowerShell and inspired by the MySQL Notifier experience. It runs in the system tray, checks the health of one or more PostgreSQL services, detects service restarts through PID changes, and surfaces status changes through icons, notifications, logs, and quick actions.
 
 <p align="center">
-  <img src="docs/images/pgnotifier.png" alt="PgNotifier Banner" width="800"/>
+  <img src="docs/images/PgNotifier.png" alt="PgNotifier Banner" width="800"/>
 </p>
 
 ## Highlights
