@@ -32,10 +32,14 @@ PgNotifier/
 |   `-- build.ps1
 |-- config/
 |   `-- appsettings.json
+|-- dist/
+|   |-- installers/
+|   `-- packages/
 |-- examples/
 |   `-- appsettings.sample.json
-|-- installer/
-|   `-- PgNotifier.iss
+|-- packaging/
+|   `-- inno/
+|       `-- PgNotifier.iss
 |-- src/
 |   |-- PgNotifier.ps1
 |   `-- Modules/
@@ -53,7 +57,7 @@ PgNotifier/
 
 - Windows 10 or Windows 11
 - Windows PowerShell 5.1 or PowerShell 7 running on Windows
-- PostgreSQL client tools available, especially `pg_isready.exe`
+- PostgreSQL client tools recommended for best results, especially `pg_isready.exe`
 - Permission to query Windows services
 - Administrator permission only when you want the tray menu to restart services
 
@@ -89,7 +93,7 @@ C:\ProgramData\PgNotifier\appsettings.json
     "silentMode": false
   },
   "logging": {
-    "logPath": "C:\\ProgramData\\PgNotifier\\logs\\pgnotifier.log",
+    "logPath": "%LocalAppData%\\PgNotifier\\logs\\pgnotifier.log",
     "level": "INFO"
   },
   "notifications": {
@@ -126,10 +130,10 @@ C:\ProgramData\PgNotifier\appsettings.json
 - `application.restartBadgeSeconds`: how long the icon stays yellow after a restart.
 - `application.autoDiscover`: when `true`, automatically adds PostgreSQL Windows services not explicitly listed.
 - `application.silentMode`: disables balloon notifications without disabling monitoring.
-- `logging.logPath`: log file destination.
+- `logging.logPath`: log file destination. `%LocalAppData%` is recommended so the tray app can always write logs as the signed-in user.
 - `notifications.enabled`: master switch for tray notifications.
 - `notifications.suppressStartupBalloon`: skips the startup notification.
-- `pgIsReady.path`: full path or command name for `pg_isready.exe`.
+- `pgIsReady.path`: full path or command name for `pg_isready.exe`. If omitted or not found, PgNotifier falls back to a TCP connectivity check.
 - `pgIsReady.timeoutSeconds`: timeout per connectivity attempt.
 - `pgIsReady.retryCount`: number of retries after the first attempt fails.
 - `pgIsReady.retryDelayMs`: delay between retries.
@@ -177,7 +181,20 @@ Install-Module ps2exe -Scope CurrentUser
 
 Install [Inno Setup](https://jrsoftware.org/isdl.php) and ensure `ISCC.exe` is available in `PATH`.
 
-### 2. Build the executable and installer
+### 2. Build only the executable
+
+This is the recommended path if you do not have Inno Setup installed:
+
+```powershell
+.\build\build.ps1 -Version 1.0.0 -SkipInstaller
+```
+
+This generates:
+
+- `dist\packages\PgNotifier-1.0.0\PgNotifier.exe`
+- `dist\packages\PgNotifier-1.0.0\config\appsettings.json`
+
+### 3. Build the executable and installer
 
 ```powershell
 .\build\build.ps1 -Version 1.0.0
@@ -185,17 +202,23 @@ Install [Inno Setup](https://jrsoftware.org/isdl.php) and ensure `ISCC.exe` is a
 
 This generates:
 
-- `dist\PgNotifier-1.0.0\PgNotifier.exe`
-- `dist\PgNotifier-1.0.0\config\appsettings.json`
-- `dist\installer\PgNotifier-Setup-1.0.0.exe`
+- `dist\packages\PgNotifier-1.0.0\PgNotifier.exe`
+- `dist\packages\PgNotifier-1.0.0\config\appsettings.json`
+- `dist\installers\PgNotifier-Setup-1.0.0.exe`
 
-### 3. Build only the executable
+If Inno Setup is not installed, the script will generate the package and skip installer generation with a warning.
+
+### 4. Build only the installer from an existing package
 
 ```powershell
-.\build\build.ps1 -Version 1.0.0 -SkipInstaller
+.\build\build.ps1 -Version 1.0.0 -InstallerOnly
 ```
 
 ## Installer behavior
+
+The bundled Inno Setup installer script lives in `packaging\inno\PgNotifier.iss`.
+
+The generated installer executable is written to `dist\installers`.
 
 The bundled Inno Setup installer:
 
@@ -248,3 +271,4 @@ Suggested release cadence:
 ## License
 
 This project uses the MIT license. See `LICENSE` for details.
+Startup diagnostics are written to `%LocalAppData%\PgNotifier\logs\startup-errors.log` so the tray app does not fail when running without administrative write access to `ProgramData`.
